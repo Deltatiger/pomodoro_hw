@@ -1,71 +1,64 @@
-import tm1637
+import constants
+from configuration import Configuration
+from models.button import Button
 from machine import Pin, Timer
-from utime import sleep
+import tm1637
+
+config = Configuration()
+
+# TODO Move this to a configuration
 my_display = tm1637.TM1637(clk=Pin(1), dio=Pin(0))
-short_timer_button = Pin(15, Pin.IN, Pin.PULL_DOWN)
-long_timer_button = Pin(14, Pin.IN, Pin.PULL_DOWN)
 
-is_short_timer_clicked = False
-is_long_timer_clicked = False
-
-timer = None
 time_remaining_in_ms = 0
+timer: Timer | None = None
 
-my_display.brightness(6)
 
-def update_button_states():
+def get_pressed_button(buttons: list[Button]) -> Button | None:
     """
-    Updates the button click status based on the readings
+    Finds the first button that is pressed
+    :param buttons: List of buttons
+    :returns: First pressed button or None
     """
-    global is_short_timer_clicked, is_long_timer_clicked
-    is_short_timer_clicked = short_timer_button.value() == 1
-    is_long_timer_clicked = long_timer_button.value() == 1
-    
-    if is_short_timer_clicked:
-        print("Button Short clicked")
-    if is_long_timer_clicked:
-        print("Button Long clicked")
+    if buttons is None:
+        return None
+    for button in buttons:
+        if button.is_pressed:
+            return button
+    return None
 
-def update_time_remaining(timer_ref):
+def update_time_remaining(timer_ref: Timer) -> None:
     """
-    Call back to handle the updation of the time based on the period
+    Updates the time remaining
     """
     global time_remaining_in_ms
-    time_remaining_in_ms = time_remaining_in_ms - 500
-    
-    if time_remaining_in_ms <= 0:
-        timer_ref.deinit()
-        timer_ref = None
-        time_remaining_in_ms = 0
-    
-def reset_timer_based_on_click():
+    time_remaining_in_ms = time_remaining_in_ms - constants.TIMER_PERIOD
+
+
+def update_timer_based_on_click(pressed_button: Button) -> None:
     """
-    Sets the timer based on the buttons that were clicked
+    Updates the remaining timer based on the pressed button
+    :param pressed_button: Currently pressed button
     """
-    global is_short_timer_clicked, is_long_timer_clicked, timer, time_remaining_in_ms
-    duration = 0
-    if is_short_timer_clicked:
-        duration = 15
-    if is_long_timer_clicked:
-        duration = 40
-    if duration == 0:
-        # Nothing was clicked. Don't do anything.
-        return
-    
-    time_remaining_in_ms = duration * 60 * 1000 # Conversion to ms
-    
+    # Stop the existing timer
+    global timer, time_remaining_in_ms
     if timer is not None:
         timer.deinit()
         timer = None
-    timer = machine.Timer()
-    timer.init(mode=Timer.PERIODIC, period=500, callback=update_time_remaining)
+    time_remaining_in_ms = pressed_button.time * constants.MINUTE_IN_MS
+    timer = Timer()
+    timer.init(
+        mode=Timer.PERIODIC,
+        period=constants.TIMER_PERIOD,
+        callback=update_time_remaining
+    )
 
-def display_time():
+
+def display_time() -> None:
     """
-    Displays the time based on the time remaining or the message.
+    Display the time
     """
     global my_display, time_remaining_in_ms
-    
+
     if time_remaining_in_ms == 0:
         my_display.brightness(1)
         my_display.show("DONE")
@@ -76,10 +69,21 @@ def display_time():
         my_display.brightness(5)
         my_display.show(display_string)
 
-while True:
-    update_button_states()
-    reset_timer_based_on_click()
-    display_time()
-    sleep(0.5)
 
-print("Stopped")
+# Configure the buttons
+for button in config.buttons:
+    hw_button = Pin(
+        button.gpio,
+        Pin.IN,
+        Pin.PULL_DOWN
+    )
+    button.hw_pin = hw_button
+
+while True:
+    for button in config.buttons:
+        button.update_pressed_status()
+    pressed_button = get_pressed_button(config.buttons)
+    if pressed_button is not None:
+        update_timer_based_on_click(pressed_button)
+    display_time()
+

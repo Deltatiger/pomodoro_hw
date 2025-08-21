@@ -4,3 +4,8 @@ TODO:
 1. Make this configurable based on a JSON file
 2. Sort of a configuration mode so that the timings can be changed.
 3. Need some sort of count tracking.
+
+New Idea:
+1. Make this a client.
+2. Add a simple web app / some GUI app as the Server.
+3. Track and monitor everything from the Server App.

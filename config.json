@@ -1,0 +1,19 @@
+{
+    "buttons": [
+        {
+            "gpio": 13,
+            "action": "START_TIMER",
+            "time": 15
+        },
+        {
+            "gpio": 14,
+            "action": "START_TIMER",
+            "time": 30
+        },
+        {
+            "gpio": 15,
+            "action": "START_TIMER",
+            "time": 45
+        }
+    ]
+}
