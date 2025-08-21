@@ -6,9 +6,6 @@ import tm1637
 
 config = Configuration()
 
-# TODO Move this to a configuration
-my_display = tm1637.TM1637(clk=Pin(1), dio=Pin(0))
-
 time_remaining_in_ms = 0
 timer: Timer | None = None
 
@@ -25,6 +22,7 @@ def get_pressed_button(buttons: list[Button]) -> Button | None:
         if button.is_pressed:
             return button
     return None
+
 
 def update_time_remaining(timer_ref: Timer) -> None:
     """
@@ -57,17 +55,17 @@ def display_time() -> None:
     """
     Display the time
     """
-    global my_display, time_remaining_in_ms
+    global config, time_remaining_in_ms
 
     if time_remaining_in_ms == 0:
-        my_display.brightness(1)
-        my_display.show("DONE")
+        config.display.hw_controller.brightness(1)
+        config.display.hw_controller.show("DONE")
     else:
         minutes_left = int(time_remaining_in_ms / 60 / 1000)
         seconds_left = int(time_remaining_in_ms / 1000) % 60
         display_string = ("%02d" % minutes_left) + ("%02d" % seconds_left)
-        my_display.brightness(5)
-        my_display.show(display_string)
+        config.display.hw_controller.brightness(5)
+        config.display.hw_controller.show(display_string)
 
 
 # Configure the buttons
@@ -78,6 +76,12 @@ for button in config.buttons:
         Pin.PULL_DOWN
     )
     button.hw_pin = hw_button
+
+# Configure the Display
+config.display.hw_controller = tm1637.TM1637(
+    clk=Pin(config.display.clock_pin),
+    dio=Pin(config.display.data_pin)
+)
 
 while True:
     for button in config.buttons:

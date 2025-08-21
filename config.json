@@ -15,5 +15,9 @@
             "action": "START_TIMER",
             "time": 45
         }
-    ]
+    ],
+    "display": {
+        "clock_gpio" : 1,
+        "data_gpio": 0
+    }
 }

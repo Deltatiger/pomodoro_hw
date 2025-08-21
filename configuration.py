@@ -1,6 +1,7 @@
 import json
 import constants
 from models.button import Button
+from models.display import Display
 
 
 class Configuration:
@@ -9,6 +10,7 @@ class Configuration:
     """
 
     buttons: list[Button] = []
+    display: Display = None
     
     def __init__(self):
         """
@@ -19,6 +21,7 @@ class Configuration:
             # Nothing to process. Ignore.
             return
         self._set_button_config(json_data)
+        self._set_display_config(json_data)
 
     def _read_config_file(self) -> dict | None:
         """
@@ -44,3 +47,17 @@ class Configuration:
                 button_data['time']
             )
             self.buttons.append(button_item)
+
+    def _set_display_config(self, json_data: dict) -> None:
+        """
+        Sets the configuration required for running the Display
+        :param json_data: Json Configuration File
+        """
+        if 'display' not in json_data:
+            return
+
+        display_config = json_data['display']
+        self.display = Display(
+            clock_pin=display_config['clock_gpio'],
+            data_pin=display_config['data_gpio']
+        )
