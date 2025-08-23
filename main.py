@@ -2,7 +2,9 @@ import constants
 from configuration import Configuration
 from models.button import Button
 from machine import Pin, Timer
+from network_manager import NetworkManager
 import tm1637
+from time import sleep
 
 config = Configuration()
 
@@ -83,6 +85,20 @@ config.display.hw_controller = tm1637.TM1637(
     dio=Pin(config.display.data_pin)
 )
 
+config.network.led.set_hw_pins(
+    r_pin=Pin(config.network.led.red_gpio, Pin.OUT),
+    g_pin=Pin(config.network.led.green_gpio, Pin.OUT),
+    b_pin=Pin(config.network.led.blue_gpio, Pin.OUT)
+)
+
+network_manager = NetworkManager(config.network)
+network_manager.connect()
+connected_status = False
+while not connected_status:
+    connected_status = network_manager.check_connection_status()
+
+print("Connected to the Network")
+
 while True:
     for button in config.buttons:
         button.update_pressed_status()
@@ -90,4 +106,4 @@ while True:
     if pressed_button is not None:
         update_timer_based_on_click(pressed_button)
     display_time()
-
+    sleep(0.1)

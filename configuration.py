@@ -2,6 +2,8 @@ import json
 import constants
 from models.button import Button
 from models.display import Display
+from models.network import Network
+from models.led import Led
 
 
 class Configuration:
@@ -11,6 +13,7 @@ class Configuration:
 
     buttons: list[Button] = []
     display: Display = None
+    network: Network = None
     
     def __init__(self):
         """
@@ -22,6 +25,7 @@ class Configuration:
             return
         self._set_button_config(json_data)
         self._set_display_config(json_data)
+        self._set_network_config(json_data)
 
     def _read_config_file(self) -> dict | None:
         """
@@ -60,4 +64,23 @@ class Configuration:
         self.display = Display(
             clock_pin=display_config['clock_gpio'],
             data_pin=display_config['data_gpio']
+        )
+
+    def _set_network_config(self, json_data: dict) -> None:
+        """
+        Sets the Network Configuration
+        :param json_data: Json Configuration Data
+        """
+        networking_config = json_data['network']
+        if networking_config is None:
+            pass
+        self.network = Network()
+        self.network.ssid = networking_config['ssid']
+        self.network.password = networking_config['password']
+        # Read the color LED control notification.
+        led_controls = networking_config['led_module_inputs']
+        self.network.led = Led(
+            r=led_controls['r_gpio'],
+            g=led_controls['g_gpio'],
+            b=led_controls['b_gpio']
         )

@@ -21,8 +21,8 @@
         "data_gpio": 0
     },
     "network": {
-        "ssid" : "JioFiber-LKhhK",
-        "password": "tiger4life",
+        "ssid" : "",
+        "password": "",
         "led_module_inputs": {
             "g_gpio": 18,
             "r_gpio": 19,
