@@ -6,9 +6,20 @@ from time import sleep
 from timer_manager import TimerManager
 
 config = Configuration()
+blink_phase = False
 
-time_remaining_in_ms = 0
-timer: Timer | None = None
+
+def convert_to_time_str(time_remaining: int) -> str:
+    """
+    Convert the number to a time string
+    :param time_remaining: Time remaining in ms
+    :returns: Time string
+    """
+    time_remaining = abs(time_remaining)  # Fix the loop around
+    minutes_left = int(time_remaining / 60 / 1000)
+    seconds_left = int(time_remaining / 1000) % 60
+    display_string = ("%02d" % minutes_left) + ("%02d" % seconds_left)
+    return display_string
 
 
 def display_time(time_remaining: int, time_display: TM1637) -> None:
@@ -21,13 +32,19 @@ def display_time(time_remaining: int, time_display: TM1637) -> None:
     if time_remaining == 0:
         time_display.brightness(1)
         time_display.show("DONE")
+        return
+    global blink_phase
+    time_string = convert_to_time_str(time_remaining)
+    time_display.brightness(5)
+    if time_remaining < 0:
+        # Need to blink the time
+        if blink_phase:
+            time_display.show('    ')
+        else:
+            time_display.show(time_string)
+        blink_phase = not blink_phase
     else:
-        time_remaining = abs(time_remaining) # Fix the loop around
-        minutes_left = int(time_remaining / 60 / 1000)
-        seconds_left = int(time_remaining / 1000) % 60
-        display_string = ("%02d" % minutes_left) + ("%02d" % seconds_left)
-        time_display.brightness(5)
-        time_display.show(display_string)
+        time_display.show(time_string)
 
 
 # Configure the buttons
@@ -68,4 +85,4 @@ while True:
         timer_manager.get_time_remaining(),
         config.display.hw_controller
     )
-    sleep(0.1)
+    sleep(0.250)
